@@ -1,7 +1,9 @@
 import { blockList } from './blockList.js';
+import { ethnicSlurs } from './ethnicSlurs.js';
 
 const socket = io();
 const mainContainer = document.querySelector('#main-container');
+const userForm = document.querySelector('#user-form');
 const messages = [];
 const promptTitle = document.querySelector('#prompt-title');
 let lastTime = performance.now();
@@ -11,7 +13,6 @@ let aliasInput = document.querySelector('#alias');
 let colorPicker = document.querySelector('#favcolor');
 let slider = document.querySelector('#speed-slider');
 let txtMsgInput = document.querySelector('#txt-msg');
-let submitBtn = document.querySelector('#submit-btn');
 
 let userResponse = {
   alias: "",
@@ -29,14 +30,41 @@ let messageContainer = {
 
 
 const separatorPattern = '[\\p{P}\\p{S}\\p{M}\\u200D]*';
-const blockListPattern = blockList
-  .map((word) => word.split('').join(separatorPattern))
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const blockedTerms = [...new Set([...blockList, ...ethnicSlurs])];
+const blockListPattern = blockedTerms
+  .sort((a, b) => b.length - a.length)
+  .map((term) => term
+    .trim()
+    .split(/\s+/u)
+    .map((word) => Array.from(word, escapeRegex).join(separatorPattern))
+    .join('\\s+'))
   .join('|');
-const blockListRegex = new RegExp(`\\b(?:${blockListPattern})\\b`, 'giu');
+const blockListRegex = new RegExp(`(?<![\\p{L}\\p{N}])(?:${blockListPattern})(?![\\p{L}\\p{N}])`, 'giu');
 
-//listen for submit button and do something with the input
-submitBtn.addEventListener("click", function (e) {
+const containsBlockedTerm = (value) => {
+  blockListRegex.lastIndex = 0;
+  return blockListRegex.test(value);
+};
+
+const validateAlias = () => {
+  const isBlocked = containsBlockedTerm(aliasInput.value);
+  aliasInput.setCustomValidity(
+    isBlocked ? 'Please choose an alias that does not contain blocked terms.' : ''
+  );
+  return !isBlocked;
+};
+
+aliasInput.addEventListener('input', validateAlias);
+
+userForm.addEventListener("submit", function (e) {
   e.preventDefault();
+  if (!validateAlias()) {
+    aliasInput.reportValidity();
+    aliasInput.focus();
+    return;
+  }
+
   socket.emit("submit-user-resp", {
     alias: aliasInput.value,
     color: colorPicker.value,
@@ -58,6 +86,7 @@ messages.push(msgContainer);
 });
 
 const buildMessage = (u) => {
+  u.alias = validateMessage(u.alias);
   u.message = validateMessage(u.message);
   return `${u.alias}: ${u.message}`;
 };
