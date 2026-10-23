@@ -136,7 +136,9 @@ const clearMessages = () => {
 const tick = (currentTime) => {
   const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
   lastTime = currentTime;
-
+  if (currentTime - lastTime > 300) {
+    clearMessages();
+  }
   for (const m of messages) {
     m.posx += m.speed * dt;
     if (m.posx > mainContainer.clientWidth - 1) {
