@@ -5,13 +5,13 @@ const mainContainer = document.querySelector('#main-container');
 const messages = [];
 const promptTitle = document.querySelector('#prompt-title');
 let lastTime = performance.now();
-let topics = ["What's one word to describe your day?", "You can vent for a bit, don't hold back.", "Share something you're grateful for!", "How many hours of sleep did you get?!", "Try not to use any profanity in here!", "What's (3+6)/9*7?", "Tell a joke don't be shy!", "Did you laugh today?"];
+let topics = ["What's one word to describe your day?", "You can vent for a bit, don't hold back.", "Share something you're grateful for!", "How many hours of sleep did you get?!", "Try not to use any profanity in here!", "What's (3+6)/9*7?", "Tell a joke don't be shy!", "Did you laugh today?", "Are you a coffee, tea, or water person?", "What's one thing you want to accomplish today?", "How was your commute today?", "What's one thing you want more of next year?", "Describe your day in emojis", "Tell a scary story"];
 //target fields
-let aliasInput = document.querySelector('#alias')
-let colorPicker = document.querySelector('#favcolor')
-let slider = document.querySelector('#speed-slider')
-let txtMsgInput = document.querySelector('#txt-msg')
-let submitBtn = document.querySelector('#submit-btn')
+let aliasInput = document.querySelector('#alias');
+let colorPicker = document.querySelector('#favcolor');
+let slider = document.querySelector('#speed-slider');
+let txtMsgInput = document.querySelector('#txt-msg');
+let submitBtn = document.querySelector('#submit-btn');
 
 let userResponse = {
   alias: "",
@@ -120,6 +120,18 @@ const displayMessage = (msgContainer) => {
   return messageElement;
 };
 
+const clearMessages = () => {
+  //if the amount of messages on the screen is greater than 300 start removing them
+  if (messages.length > 300) {
+    for (let i = messages.length; i > 0; i --) {
+      let m = messages.pop();
+      m.el.remove();
+    }
+  }
+  else {
+    console.log(`Current message count: ${messages.length}`);
+  }
+}
 
 const tick = (currentTime) => {
   const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
@@ -127,7 +139,7 @@ const tick = (currentTime) => {
 
   for (const m of messages) {
     m.posx += m.speed * dt;
-    if (m.posx > mainContainer.clientWidth) {
+    if (m.posx > mainContainer.clientWidth - 1) {
       m.posx = -m.width;
     }
     m.el.style.left = `${m.posx}px`;
