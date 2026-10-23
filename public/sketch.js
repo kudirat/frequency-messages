@@ -28,7 +28,11 @@ let messageContainer = {
 };
 
 
-const blockListRegex = new RegExp(`\\b(${blockList.join('|')})\\b`, 'i');
+const separatorPattern = '[\\p{P}\\p{S}\\p{M}\\u200D]*';
+const blockListPattern = blockList
+  .map((word) => word.split('').join(separatorPattern))
+  .join('|');
+const blockListRegex = new RegExp(`\\b(?:${blockListPattern})\\b`, 'giu');
 
 //listen for submit button and do something with the input
 submitBtn.addEventListener("click", function (e) {
@@ -59,18 +63,12 @@ const buildMessage = (u) => {
 };
 
 const validateMessage = (msg) => {
-  // = msg.replace(/\s/g, "");
   console.log("Validating message: " + msg);
-  if (blockListRegex.test(msg)) {
+  const filteredMessage = msg.replace(blockListRegex, '***');
+  if (filteredMessage !== msg) {
     console.log("Blocked message detected: " + msg);
-    for (const word of blockList) {
-      
-      if (msg.includes(word)) {
-        msg = msg.replace(new RegExp(`\\b${word}\\b`, 'gi'), '***');
-      }
-    }
   }
-  return msg;
+  return filteredMessage;
 };
 
 
